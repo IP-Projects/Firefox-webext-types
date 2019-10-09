@@ -5,6 +5,123 @@
 // TypeScript Version: 2.4
 
 ////////////////////
+// Alarms
+////////////////////
+/**
+ * Use the browser.alarms API to schedule code to run periodically or at a specified time in the future.
+ * Browser compatibility: Chrome, Firefox(45), Opera, Firefox for Android (48)
+ * Permissions:  "alarms"
+ */
+declare namespace browser.alarms {
+    /**
+     * You can use this to specify when the alarm will initially fire, either as an absolute value (when), or as a delay from the time the alarm is set (delayInMinutes).
+     * To make the alarm recur, specify periodInMinutes.
+     * On Chrome, unless the extension is loaded unpackaged, alarms it creates are not allowed to fire more than once per minute.
+     * If an extension tries to set delayInMinutes to a value < 1, or when to a value < 1 minute in the future, then the alarm will fire after 1 minute.
+     * If an extension tries to set periodInMinutes to a value < 1, then the alarm will fire every minute.
+     * Browser compatibility: Chrome, Firefox(45), Opera, Firefox for Android (48)
+     */
+    export interface AlarmCreateInfo {
+        /**
+         * Optional. The time the alarm will fire first, given as milliseconds since the epoch.
+         *  To get the number of milliseconds between the epoch and the current time, use Date.now().
+         *  If you specify when, don't specify delayInMinutes.
+         */
+        when?: number;
+        /**
+         * Optional. The time the alarm will fire first, given as minutes from the time the alarm is set.
+         *  If you specify delayInMinutes, don't specify when.
+         */
+        delayInMinutes?: number;
+        /**
+         * Optional. If this is specified, the alarm will fire again every periodInMinutes after its initial firing.
+         * If you specify this value you may omit both when and delayInMinutes, and the alarm will then fire initially after periodInMinutes.
+         * If periodInMinutes is not specified, the alarm will only fire once.
+         */
+        periodInMinutes?: number;
+    }
+
+    /**
+     * Information about a single alarm. This object is returned from alarms.get() and alarms.getAll(), and is passed into the alarms.onAlarm listener.
+     * Browser compatibility: Chrome, Firefox(45), Opera, Firefox for Android (48)
+     */
+    export interface Alarm {
+        /** Name of this alarm. This is the name that was passed into the alarms.create() call that created this alarm. */
+        name: string;
+        /** Time at which the alarm is scheduled to fire next, in milliseconds since the epoch. */
+        scheduledTime: number;
+        /** Optional. If this is not null, then the alarm is periodic, and this represents its period in minutes. */
+        periodInMinutes?: number;
+    }
+
+    export interface AlarmEvent extends browser.events.Event<(alarm: Alarm) => void> {}
+
+    /**
+     * Creates a new alarm for the current browser session. An alarm may fire once or multiple times. An alarm is cleared after it fires for the last time.
+     * @param alarmInfo Describes when the alarm should fire. The initial time must be specified by either when or delayInMinutes (but not both). If periodInMinutes is set, the alarm will repeat every periodInMinutes minutes after the initial event. If neither when or delayInMinutes is set for a repeating alarm, periodInMinutes is used as the default for delayInMinutes.
+     * Browser compatibility: Chrome, Firefox(45), Opera, Firefox for Android (48)
+     */
+    export function create(alarmInfo: AlarmCreateInfo): void;
+
+    /**
+     * Creates a new alarm for the current browser session. An alarm may fire once or multiple times. An alarm is cleared after it fires for the last time.
+     * @param name Optional name to identify this alarm. Defaults to the empty string.
+     * @param alarmInfo Describes when the alarm should fire. The initial time must be specified by either when or delayInMinutes (but not both). If periodInMinutes is set, the alarm will repeat every periodInMinutes minutes after the initial event. If neither when or delayInMinutes is set for a repeating alarm, periodInMinutes is used as the default for delayInMinutes.
+     * Browser compatibility: Chrome, Firefox(45), Opera, Firefox for Android (48)
+     */
+    export function create(name: string, alarmInfo: AlarmCreateInfo): void;
+
+    /**
+     * Gets all active alarms for the extension.
+     * @returns A Promise that will be fulfilled with an array of Alarm objects. Each of these represents an active alarm that belongs to the extension. If no alarms are active, the array will be empty.
+     * Browser compatibility: Chrome, Firefox(45), Opera, Firefox for Android (48)
+     */
+    export function getAll(): Promise<Alarm[]>;
+
+    /**
+     * Cancels all active alarms.
+     * @returns A Promise that will be fulfilled with a boolean. This will be true if any alarms were cleared, false otherwise. Note that Chrome always passes true here.
+     * Browser compatibility: Chrome, Firefox(45), Opera, Firefox for Android (48)
+     */
+    export function clearAll(): Promise<boolean>;
+
+    /**
+     * Cancels an alarm, given its name.
+     * @param name The name of the alarm to clear. Defaults to the empty string.
+     * @returns A Promise that will be fulfilled with a boolean. This will be true if the alarm was cleared, false otherwise.
+     * Browser compatibility: Chrome, Firefox(45), Opera, Firefox for Android (48)
+     */
+    export function clear(name?: string): Promise<boolean>;
+
+    /**
+     * Cancels an alarm, given its name.
+     * @returns A Promise that will be fulfilled with a boolean. This will be true if the alarm was cleared, false otherwise.
+     * Browser compatibility: Chrome, Firefox(45), Opera, Firefox for Android (48)
+     */
+    export function clear(): Promise<boolean>;
+
+    /**
+     * Gets an alarm, given its name.
+     * @returns A Promise that will be fulfilled with an Alarm object. This represents the alarm whose name matches name. If no alarms match, this will be undefined.
+     * Browser compatibility: Chrome, Firefox(45), Opera, Firefox for Android (48)
+     */
+    export function get(): Promise<Alarm>;
+
+    /**
+     * Gets an alarm, given its name.
+     * @param name The name of the alarm to get. Defaults to the empty string.
+     * @returns A Promise that will be fulfilled with an Alarm object. This represents the alarm whose name matches name. If no alarms match, this will be undefined.
+     * Browser compatibility: Chrome, Firefox(45), Opera, Firefox for Android (48)
+     */
+    export function get(name: string): Promise<Alarm>;
+
+    /** Fired when an alarm has elapsed. Useful for event pages.
+     * Browser compatibility: Chrome, Firefox(45), Opera, Firefox for Android (48)
+     */
+    export var onAlarm: AlarmEvent;
+}
+
+////////////////////
 // Events
 ////////////////////
 

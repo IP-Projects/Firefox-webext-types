@@ -576,11 +576,645 @@ declare namespace browser.events {
         id?: string;
         /** List of actions that are triggered if one of the conditions is fulfilled. */
         actions: any[];
-        /**
-         * Optional.
-         * Since Firefox 28.
-         * Tags can be used to annotate rules and perform operations on sets of rules.
-         */
+        /** Optional. Tags can be used to annotate rules and perform operations on sets of rules. */
         tags?: string[];
     }
+}
+
+////////////////////
+// Context Menus
+////////////////////
+/**
+ * Same namespace as the one Chrome uses, it can be used interchangeably with the 'menus' namespace with minimum drawbacks.
+ * Use the browser.contextMenus API to add items to Firefox's context menu. You can choose what types of objects your context menu additions apply to, such as images, hyperlinks, and pages.
+ * Browser compatibility: Chrome, Firefox, Opera
+ * Permissions:  "contextMenus"
+ */
+declare namespace browser.contextMenus {
+    type contextType =
+        | "all"
+        | "audio"
+        | "bookmark"
+        | "browser_action"
+        | "editable"
+        | "frame"
+        | "image"
+        | "link"
+        | "page"
+        | "page_action"
+        | "password"
+        | "selection"
+        | "tab"
+        | "tools_menu"
+        | "video";
+
+    type itemType = "normal" | "checkbox" | "radio" | "separator";
+
+    type modifiersType = "Alt" | "Command" | "Ctrl" | "MacCtrl" | "Shift";
+
+    type viewType = "tab" | "popup" | "sidebar";
+
+    /**
+     * "_execute_browser_action": simulate a click on the extension's browser action, opening its popup if it has one
+     * "_execute_page_action": simulate a click on the extension's page action, opening its popup if it has one
+     * "_execute_sidebar_action": open the extension's sidebar
+     */
+    type commandType =
+        | "_execute_browser_action"
+        | "_execute_page_action"
+        | "_execute_sidebar_action";
+
+    /**
+     * Information passed to the menus.onClicked event listener when a menu item is clicked
+     */
+    export interface OnClickData {
+        /** Optional. The ID of the bookmark where the context menu was clicked. */
+        bookmarkId?: string;
+
+        /** Optional. Which mouse button was pressed. The values are the same as for MouseEvent.button */
+        button?: number;
+
+        /** Optional. A flag indicating whether a checkbox or radio item was checked after it was clicked.*/
+        checked?: boolean;
+
+        /**A flag indicating whether the element is editable: for example, if it is a textarea */
+        editable: boolean;
+
+        /**
+         * Optional.The ID of the frame in which the item was clicked.
+         * The frame ID can be used in other APIs that accept frame IDs, such as tabs.sendMessage().
+         * If the item was clicked in the top level document, frameId is zero.
+         * If the item was clicked outside the page entirely (for example, in the tools_menu or tab context), then frameId is undefined.
+         */
+        frameId?: number;
+
+        /** Optional. The URL of the frame of the element where the context menu was clicked, if it was in a frame. */
+        frameUrl?: string;
+
+        /** Optional. If the element is a link, the text for the link. If the link contains no text, the URL itself is given here. */
+        linkText?: string;
+
+        /** Optional.If the element is a link, the URL it points to */
+        linkUrl?: string;
+
+        /** Optional. One of "image", "video", or "audio" if the context menu was activated on one of these types of elements */
+        mediaType?: string;
+
+        /** The ID of the menu item that was clicked. */
+        menuItemId: number | string;
+
+        /**
+         * An array containing any modifier keys that were pressed when the item was clicked.
+         * Possible values are: "Alt", "Command", "Ctrl", "MacCtrl", and "Shift". On a Mac, if the user has the Control key pressed, then both "Ctrl" and "MacCtrl" are included.
+         */
+        modifiers: modifiersType[];
+
+        /** The URL of the page in which the menu item was clicked. This property is not present if the click occurred in a context where there is no current page, such as on a browser action */
+        pageUrl?: string;
+
+        /** The parent ID, if any, for the item clicked. */
+        parentMenuItemId?: number | string;
+
+        /** Optional. If some text was selected in the page, this contains the selected text. */
+        selectionText?: string;
+
+        /** Optional. Will be present for elements with a "src" URL. */
+        srcUrl?: string;
+
+        /** Optional. An identifier of the element, if any, over which the context menu was created. Use menus.getTargetElement() in the content script to locate the element. Note that this is not the id attribute of the page element. */
+        targetElementId?: number;
+
+        /** Optional. The type of extension view. */
+        viewType?: viewType;
+
+        /** Optional.A flag indicating whether a checkbox or radio item was checked before it was clicked. */
+        wasChecked?: boolean;
+    }
+
+    export interface CreateProperties {
+        /** Optional. The initial state of a checkbox or radio item: true for selected and false for unselected. Only one radio item can be selected at a time in a given group of radio items.  */
+        checked?: boolean;
+
+        /** Optional. String describing an action that should be taken when the user clicks the item. Possible values are */
+        command?: commandType;
+
+        /** Optional. Array of contexts in which this menu item will appear. This option is omitted:
+         * if the item's parent has contexts set, then this item will inherit its parent's contexts
+         * otherwise, the item is given a context array of ["page"].
+         */
+        contexts?: string[];
+
+        /** Optional. Lets you restrict the item to apply only to documents whose URL matches one of the given match patterns. This applies to frames as well.  */
+        documentUrlPatterns?: string[];
+
+        /** Optional.Whether this menu item is enabled or disabled. Defaults to true. */
+        enabled?: boolean;
+
+        /**
+         * Optional. One or more custom icons to display next to the item. Custom icons can only be set for items appearing in submenus.
+         * This property is an object with one property for each supplied icon: the property's name should include the icon's size in pixels, and path is relative to the icon from the extension's root directory.
+         * The browser tries to choose a 16x16 pixel icon for a normal display or a 32x32 pixel icon for a high-density display
+         */
+        icons?: Object;
+
+        /** Optional.The unique ID to assign to this item. Mandatory for event pages. Cannot be the same as another ID for this extension */
+        id?: string;
+
+        /**
+         * Optional. A function that will be called when the menu item is clicked. Event pages cannot use this: instead, they should register a listener for menus.onClicked
+         * @param info Information sent when a context menu item is clicked.
+         * @param tab The details of the tab where the click took place. Note: this parameter only present for extensions.
+         */
+        onclick?: (info: OnClickData, tab: browser.tabs.Tab) => void;
+
+        /** Optional. The ID of a parent menu item; this makes the item a child of a previously added item. Note: If you have created more than one menu item, then the items will be placed in a submenu. The submenu's parent will be labeled with the name of the extension.  */
+        parentId?: number | string;
+
+        /** Optional. Similar to documentUrlPatterns, but lets you filter based on the href of anchor tags and the src attribute of img/audio/video tags. This parameter supports any URL scheme, even those that are usually not allowed in a match pattern.  */
+        targetUrlPatterns?: string[];
+
+        /** Optional. The text to be displayed in the item; this is required unless type is 'separator'. When the context is 'selection', you can use %s within the string to show the selected text. For example, if this parameter's value is "Translate '%s' to Pig Latin" and the user selects the word "cool", the context menu item for the selection is "Translate 'cool' to Pig Latin".  */
+        title?: string;
+
+        /** Optional. The type of menu item: "normal", "checkbox", "radio", "separator". Defaults to "normal".  */
+        type?: itemType;
+
+        /**
+         * Optional. List of view types where the menu item will be shown. Defaults to any view, including those without a viewType
+         */
+        viewTypes?: viewType[];
+
+        /** Optional.Whether the item is shown in the menu. Defaults to true */
+        visible?: boolean;
+    }
+
+    export interface UpdateProperties {
+        /** Optional.The initial state of a checkbox or radio item: true for selected and false for unselected. Only one radio item can be selected at a time in a given group of radio items. */
+        checked?: boolean;
+
+        /** Optional.String describing an action that should be taken when the user clicks the item. */
+        command?: "_execute_browser_action" | "_execute_page_action" | "_execute_sidebar_action";
+
+        /** Optional.Array of contexts in which this menu item will appear. If this option is omitted. */
+        contexts?: contextType[];
+
+        /** Optional.Lets you restrict the item to apply only to documents whose URL matches one of the given match patterns. This applies to frames as well. */
+        documentUrlPatterns?: string[];
+
+        /** Optional.Whether this menu item is enabled or disabled. Defaults to true. */
+        enabled?: boolean;
+
+        /**
+         * Optional. One or more custom icons to display next to the item. Custom icons can only be set for items appearing in submenus.
+         * This property is an object with one property for each supplied icon: the property's name should include the icon's size in pixels, and path is relative to the icon from the extension's root directory.
+         * The browser tries to choose a 16x16 pixel icon for a normal display or a 32x32 pixel icon for a high-density display
+         */
+        icons?: Object;
+
+        /** Optional.The unique ID to assign to this item. Mandatory for event pages. Cannot be the same as another ID for this extension */
+        id?: string;
+
+        /**
+         * Optional. A function that will be called when the menu item is clicked. Event pages cannot use this: instead, they should register a listener for menus.onClicked
+         * @param info Information sent when a context menu item is clicked.
+         * @param tab The details of the tab where the click took place. Note: this parameter only present for extensions.
+         */
+        onclick?: (info: OnClickData, tab: browser.tabs.Tab) => void;
+
+        /** Optional. The ID of a parent menu item; this makes the item a child of a previously added item. Note: If you have created more than one menu item, then the items will be placed in a submenu. The submenu's parent will be labeled with the name of the extension.  */
+        parentId?: number | string;
+
+        /** Optional. Similar to documentUrlPatterns, but lets you filter based on the href of anchor tags and the src attribute of img/audio/video tags. This parameter supports any URL scheme, even those that are usually not allowed in a match pattern.  */
+        targetUrlPatterns?: string[];
+
+        /** Optional. The text to be displayed in the item; this is required unless type is 'separator'. When the context is 'selection', you can use %s within the string to show the selected text. For example, if this parameter's value is "Translate '%s' to Pig Latin" and the user selects the word "cool", the context menu item for the selection is "Translate 'cool' to Pig Latin".  */
+        title?: string;
+
+        /** Optional. The type of menu item: "normal", "checkbox", "radio", "separator". Defaults to "normal".  */
+        type?: itemType;
+
+        /**
+         * Optional. List of view types where the menu item will be shown. Defaults to any view, including those without a viewType
+         */
+        viewTypes?: viewType[];
+
+        /** Optional.Whether the item is shown in the menu. Defaults to true */
+        visible?: boolean;
+    }
+
+    export interface ContextOptions {
+        bookmarkId?: string;
+        context?: contextType;
+        showDefaults?: boolean;
+        tabId?: string;
+    }
+
+    /**
+     * Creates a new menu item, given an options object defining properties for the item.
+     * Unlike other asynchronous functions, this one does not return a promise, but uses an optional callback to communicate success or failure. This is because its return value is the ID of the new item.
+     * For compatibility with other browsers, Firefox makes this method available via the contextMenus namespace as well as the menus namespace. Note though that it's not possible to create tools menu items (contexts: ["tools_menu"]) using the contextMenus namespace.
+     * @param callback Called when the item has been created in the browser. If there were any problems creating the item, details will be available in browser.runtime.lastError.
+     * If you specify the callback parameter, it should be a function that looks like this:
+     * function() {...};
+     */
+    export function create(
+        createProperties: CreateProperties,
+        callback?: () => void
+    ): number | string;
+
+    /**
+     * This method is available to all extension script contexts (content scripts, background pages and other extension pages) and returns the element for a given info.targetElementId, provided that the element still exists in the document where the method is invoked.
+     * The method only works in the document that includes the right-clicked element and the targetElementId expires when the user opens another context menu
+     * @param targetElementId The property of the menus.OnClickData object passed to the menus.onClicked handler or menus.onShown event
+     */
+    export function getTargetElement(targetElementId: number): object | null;
+
+    /**
+     * This API becomes callable only if the addon has the "menus.overrideContext" permission
+     * This API allows extensions to hide all default Firefox menu items in favor of providing a custom context menu UI.
+     * This context menu can consist of multiple top-level menu items from the extension, and may optionally include tab or bookmark context menu items from other extensions.
+     * This should be called during a contextmenu DOM event handler, and only applies to the menu that opens after this event.
+     */
+    export function overrideContext(contextOptions: ContextOptions): void;
+
+    export function refresh(): Promise<void>;
+
+    /**
+     * Removes a context menu item.
+     * @param menuItemId The ID of the context menu item to remove.
+     */
+    export function remove(menuItemId: string): Promise<void>;
+    /**
+     * Removes a context menu item.
+     * @param menuItemId The ID of the context menu item to remove.
+     */
+    export function remove(menuItemId: string): Promise<void>;
+
+    /**
+     * Removes all context menu items added by this extension.
+     */
+    export function removeAll(): Promise<void>;
+
+    /**
+     * Updates a previously created context menu item.
+     * @param id The ID of the item to update.
+     * @param updateProperties The properties to update. Accepts the same values as the create function.
+     * @param callback Called when the context menu has been updated.
+     * If you specify the callback parameter, it should be a function that looks like this:
+     * function() {...};
+     */
+    export function update(
+        id: string,
+        updateProperties: UpdateProperties,
+        callback?: () => void
+    ): void;
+    /**
+     * Updates a previously created context menu item.
+     * @param id The ID of the item to update.
+     * @param updateProperties The properties to update. Accepts the same values as the create function.
+     * @param callback Called when the context menu has been updated.
+     * If you specify the callback parameter, it should be a function that looks like this:
+     * function() {...};
+     */
+    export function update(
+        id: number,
+        updateProperties: UpdateProperties,
+        callback?: () => void
+    ): void;
+
+    /**
+     * The maximum number of top level extension items that can be added to an extension action context menu. Any items beyond this limit will be ignored.
+     */
+    export var ACTION_MENU_TOP_LEVEL_LIMIT: number;
+
+    export interface MenuClickedEvent
+        extends browser.events.Event<(info: OnClickData, tab?: browser.tabs.Tab) => void> {}
+
+    export interface MenuHideEvent extends browser.events.Event<() => void> {}
+
+    export interface MenuShowEvent
+        extends browser.events.Event<(info: OnClickData, tab: browser.tabs.Tab) => void> {}
+
+    export var onClicked: MenuClickedEvent;
+    export var onHidden: MenuHideEvent;
+    export var onShown: MenuShowEvent;
+}
+
+////////////////////
+// Context Menus - Menus
+////////////////////
+/**
+ * Same namespace as the one Chrome uses, it can be used interchangeably with the 'contextMenus' namespace with minimum added capabilities.
+ * Use the browser.contextMenus API to add items to Firefox's context menu. You can choose what types of objects your context menu additions apply to, such as images, hyperlinks, and pages.
+ * Browser compatibility: Firefox
+ * Permissions: "menus"
+ */
+declare namespace browser.menus {
+    type contextType =
+        | "all"
+        | "audio"
+        | "bookmark"
+        | "browser_action"
+        | "editable"
+        | "frame"
+        | "image"
+        | "link"
+        | "page"
+        | "page_action"
+        | "password"
+        | "selection"
+        | "tab"
+        | "tools_menu"
+        | "video";
+
+    type itemType = "normal" | "checkbox" | "radio" | "separator";
+
+    type modifiersType = "Alt" | "Command" | "Ctrl" | "MacCtrl" | "Shift";
+
+    type viewType = "tab" | "popup" | "sidebar";
+
+    /**
+     * "_execute_browser_action": simulate a click on the extension's browser action, opening its popup if it has one
+     * "_execute_page_action": simulate a click on the extension's page action, opening its popup if it has one
+     * "_execute_sidebar_action": open the extension's sidebar
+     */
+    type commandType =
+        | "_execute_browser_action"
+        | "_execute_page_action"
+        | "_execute_sidebar_action";
+
+    /**
+     * Information passed to the menus.onClicked event listener when a menu item is clicked
+     */
+    export interface OnClickData {
+        /** Optional. The ID of the bookmark where the context menu was clicked. */
+        bookmarkId?: string;
+
+        /** Optional. Which mouse button was pressed. The values are the same as for MouseEvent.button */
+        button?: number;
+
+        /** Optional. A flag indicating whether a checkbox or radio item was checked after it was clicked.*/
+        checked?: boolean;
+
+        /**A flag indicating whether the element is editable: for example, if it is a textarea */
+        editable: boolean;
+
+        /**
+         * Optional.The ID of the frame in which the item was clicked.
+         * The frame ID can be used in other APIs that accept frame IDs, such as tabs.sendMessage().
+         * If the item was clicked in the top level document, frameId is zero.
+         * If the item was clicked outside the page entirely (for example, in the tools_menu or tab context), then frameId is undefined.
+         */
+        frameId?: number;
+
+        /** Optional. The URL of the frame of the element where the context menu was clicked, if it was in a frame. */
+        frameUrl?: string;
+
+        /** Optional. If the element is a link, the text for the link. If the link contains no text, the URL itself is given here. */
+        linkText?: string;
+
+        /** Optional.If the element is a link, the URL it points to */
+        linkUrl?: string;
+
+        /** Optional. One of "image", "video", or "audio" if the context menu was activated on one of these types of elements */
+        mediaType?: string;
+
+        /** The ID of the menu item that was clicked. */
+        menuItemId: number | string;
+
+        /**
+         * An array containing any modifier keys that were pressed when the item was clicked.
+         * Possible values are: "Alt", "Command", "Ctrl", "MacCtrl", and "Shift". On a Mac, if the user has the Control key pressed, then both "Ctrl" and "MacCtrl" are included.
+         */
+        modifiers: modifiersType[];
+
+        /** The URL of the page in which the menu item was clicked. This property is not present if the click occurred in a context where there is no current page, such as on a browser action */
+        pageUrl?: string;
+
+        /** The parent ID, if any, for the item clicked. */
+        parentMenuItemId?: number | string;
+
+        /** Optional. If some text was selected in the page, this contains the selected text. */
+        selectionText?: string;
+
+        /** Optional. Will be present for elements with a "src" URL. */
+        srcUrl?: string;
+
+        /** Optional. An identifier of the element, if any, over which the context menu was created. Use menus.getTargetElement() in the content script to locate the element. Note that this is not the id attribute of the page element. */
+        targetElementId?: number;
+
+        /** Optional. The type of extension view. */
+        viewType?: viewType;
+
+        /** Optional.A flag indicating whether a checkbox or radio item was checked before it was clicked. */
+        wasChecked?: boolean;
+    }
+
+    export interface CreateProperties {
+        /** Optional. The initial state of a checkbox or radio item: true for selected and false for unselected. Only one radio item can be selected at a time in a given group of radio items.  */
+        checked?: boolean;
+
+        /** Optional. String describing an action that should be taken when the user clicks the item. Possible values are */
+        command?: commandType;
+
+        /** Optional. Array of contexts in which this menu item will appear. This option is omitted:
+         * if the item's parent has contexts set, then this item will inherit its parent's contexts
+         * otherwise, the item is given a context array of ["page"].
+         */
+        contexts?: string[];
+
+        /** Optional. Lets you restrict the item to apply only to documents whose URL matches one of the given match patterns. This applies to frames as well.  */
+        documentUrlPatterns?: string[];
+
+        /** Optional.Whether this menu item is enabled or disabled. Defaults to true. */
+        enabled?: boolean;
+
+        /**
+         * Optional. One or more custom icons to display next to the item. Custom icons can only be set for items appearing in submenus.
+         * This property is an object with one property for each supplied icon: the property's name should include the icon's size in pixels, and path is relative to the icon from the extension's root directory.
+         * The browser tries to choose a 16x16 pixel icon for a normal display or a 32x32 pixel icon for a high-density display
+         */
+        icons?: Object;
+
+        /** Optional.The unique ID to assign to this item. Mandatory for event pages. Cannot be the same as another ID for this extension */
+        id?: string;
+
+        /**
+         * Optional. A function that will be called when the menu item is clicked. Event pages cannot use this: instead, they should register a listener for menus.onClicked
+         * @param info Information sent when a context menu item is clicked.
+         * @param tab The details of the tab where the click took place. Note: this parameter only present for extensions.
+         */
+        onclick?: (info: OnClickData, tab: browser.tabs.Tab) => void;
+
+        /** Optional. The ID of a parent menu item; this makes the item a child of a previously added item. Note: If you have created more than one menu item, then the items will be placed in a submenu. The submenu's parent will be labeled with the name of the extension.  */
+        parentId?: number | string;
+
+        /** Optional. Similar to documentUrlPatterns, but lets you filter based on the href of anchor tags and the src attribute of img/audio/video tags. This parameter supports any URL scheme, even those that are usually not allowed in a match pattern.  */
+        targetUrlPatterns?: string[];
+
+        /** Optional. The text to be displayed in the item; this is required unless type is 'separator'. When the context is 'selection', you can use %s within the string to show the selected text. For example, if this parameter's value is "Translate '%s' to Pig Latin" and the user selects the word "cool", the context menu item for the selection is "Translate 'cool' to Pig Latin".  */
+        title?: string;
+
+        /** Optional. The type of menu item: "normal", "checkbox", "radio", "separator". Defaults to "normal".  */
+        type?: itemType;
+
+        /**
+         * Optional. List of view types where the menu item will be shown. Defaults to any view, including those without a viewType
+         */
+        viewTypes?: viewType[];
+
+        /** Optional.Whether the item is shown in the menu. Defaults to true */
+        visible?: boolean;
+    }
+
+    export interface UpdateProperties {
+        /** Optional.The initial state of a checkbox or radio item: true for selected and false for unselected. Only one radio item can be selected at a time in a given group of radio items. */
+        checked?: boolean;
+
+        /** Optional.String describing an action that should be taken when the user clicks the item. */
+        command?: "_execute_browser_action" | "_execute_page_action" | "_execute_sidebar_action";
+
+        /** Optional.Array of contexts in which this menu item will appear. If this option is omitted. */
+        contexts?: contextType[];
+
+        /** Optional.Lets you restrict the item to apply only to documents whose URL matches one of the given match patterns. This applies to frames as well. */
+        documentUrlPatterns?: string[];
+
+        /** Optional.Whether this menu item is enabled or disabled. Defaults to true. */
+        enabled?: boolean;
+
+        /**
+         * Optional. One or more custom icons to display next to the item. Custom icons can only be set for items appearing in submenus.
+         * This property is an object with one property for each supplied icon: the property's name should include the icon's size in pixels, and path is relative to the icon from the extension's root directory.
+         * The browser tries to choose a 16x16 pixel icon for a normal display or a 32x32 pixel icon for a high-density display
+         */
+        icons?: Object;
+
+        /** Optional.The unique ID to assign to this item. Mandatory for event pages. Cannot be the same as another ID for this extension */
+        id?: string;
+
+        /**
+         * Optional. A function that will be called when the menu item is clicked. Event pages cannot use this: instead, they should register a listener for menus.onClicked
+         * @param info Information sent when a context menu item is clicked.
+         * @param tab The details of the tab where the click took place. Note: this parameter only present for extensions.
+         */
+        onclick?: (info: OnClickData, tab: browser.tabs.Tab) => void;
+
+        /** Optional. The ID of a parent menu item; this makes the item a child of a previously added item. Note: If you have created more than one menu item, then the items will be placed in a submenu. The submenu's parent will be labeled with the name of the extension.  */
+        parentId?: number | string;
+
+        /** Optional. Similar to documentUrlPatterns, but lets you filter based on the href of anchor tags and the src attribute of img/audio/video tags. This parameter supports any URL scheme, even those that are usually not allowed in a match pattern.  */
+        targetUrlPatterns?: string[];
+
+        /** Optional. The text to be displayed in the item; this is required unless type is 'separator'. When the context is 'selection', you can use %s within the string to show the selected text. For example, if this parameter's value is "Translate '%s' to Pig Latin" and the user selects the word "cool", the context menu item for the selection is "Translate 'cool' to Pig Latin".  */
+        title?: string;
+
+        /** Optional. The type of menu item: "normal", "checkbox", "radio", "separator". Defaults to "normal".  */
+        type?: itemType;
+
+        /**
+         * Optional. List of view types where the menu item will be shown. Defaults to any view, including those without a viewType
+         */
+        viewTypes?: viewType[];
+
+        /** Optional.Whether the item is shown in the menu. Defaults to true */
+        visible?: boolean;
+    }
+
+    export interface ContextOptions {
+        bookmarkId?: string;
+        context?: contextType;
+        showDefaults?: boolean;
+        tabId?: string;
+    }
+
+    /**
+     * Creates a new menu item, given an options object defining properties for the item.
+     * Unlike other asynchronous functions, this one does not return a promise, but uses an optional callback to communicate success or failure. This is because its return value is the ID of the new item.
+     * For compatibility with other browsers, Firefox makes this method available via the menus namespace as well as the menus namespace. Note though that it's not possible to create tools menu items (contexts: ["tools_menu"]) using the menus namespace.
+     * @param callback Called when the item has been created in the browser. If there were any problems creating the item, details will be available in browser.runtime.lastError.
+     * If you specify the callback parameter, it should be a function that looks like this:
+     * function() {...};
+     */
+    export function create(
+        createProperties: CreateProperties,
+        callback?: () => void
+    ): number | string;
+
+    /**
+     * This method is available to all extension script contexts (content scripts, background pages and other extension pages) and returns the element for a given info.targetElementId, provided that the element still exists in the document where the method is invoked.
+     * The method only works in the document that includes the right-clicked element and the targetElementId expires when the user opens another context menu
+     * @param targetElementId The property of the menus.OnClickData object passed to the menus.onClicked handler or menus.onShown event
+     */
+    export function getTargetElement(targetElementId: number): object | null;
+
+    /**
+     * This API becomes callable only if the addon has the "menus.overrideContext" permission
+     * This API allows extensions to hide all default Firefox menu items in favor of providing a custom context menu UI.
+     * This context menu can consist of multiple top-level menu items from the extension, and may optionally include tab or bookmark context menu items from other extensions.
+     * This should be called during a contextmenu DOM event handler, and only applies to the menu that opens after this event.
+     */
+    export function overrideContext(contextOptions: ContextOptions): void;
+
+    export function refresh(): Promise<void>;
+
+    /**
+     * Removes a context menu item.
+     * @param menuItemId The ID of the context menu item to remove.
+     */
+    export function remove(menuItemId: string): Promise<void>;
+    /**
+     * Removes a context menu item.
+     * @param menuItemId The ID of the context menu item to remove.
+     */
+    export function remove(menuItemId: string): Promise<void>;
+
+    /**
+     * Removes all context menu items added by this extension.
+     */
+    export function removeAll(): Promise<void>;
+
+    /**
+     * Updates a previously created context menu item.
+     * @param id The ID of the item to update.
+     * @param updateProperties The properties to update. Accepts the same values as the create function.
+     * @param callback Called when the context menu has been updated.
+     * If you specify the callback parameter, it should be a function that looks like this:
+     * function() {...};
+     */
+    export function update(
+        id: string,
+        updateProperties: UpdateProperties,
+        callback?: () => void
+    ): void;
+    /**
+     * Updates a previously created context menu item.
+     * @param id The ID of the item to update.
+     * @param updateProperties The properties to update. Accepts the same values as the create function.
+     * @param callback Called when the context menu has been updated.
+     * If you specify the callback parameter, it should be a function that looks like this:
+     * function() {...};
+     */
+    export function update(
+        id: number,
+        updateProperties: UpdateProperties,
+        callback?: () => void
+    ): void;
+
+    /**
+     * The maximum number of top level extension items that can be added to an extension action context menu. Any items beyond this limit will be ignored.
+     */
+    export var ACTION_MENU_TOP_LEVEL_LIMIT: number;
+
+    export interface MenuClickedEvent
+        extends browser.events.Event<(info: OnClickData, tab?: browser.tabs.Tab) => void> {}
+
+    export interface MenuHideEvent extends browser.events.Event<() => void> {}
+
+    export interface MenuShowEvent
+        extends browser.events.Event<(info: OnClickData, tab: browser.tabs.Tab) => void> {}
+
+    export var onClicked: MenuClickedEvent;
+    export var onHidden: MenuHideEvent;
+    export var onShown: MenuShowEvent;
 }
